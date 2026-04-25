@@ -1,4 +1,4 @@
-export const RAW = [
+const RAW = [
   // Arrays / Strings
   {
     n: 3,
@@ -1263,7 +1263,6 @@ export const DIFF_CLASS = {
 };
 
 export const SLUG_MAP = {
-const SLUG_MAP = {
   1: "two-sum",
   3: "longest-substring-without-repeating-characters",
   4: "median-of-two-sorted-arrays",

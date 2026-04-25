@@ -38,8 +38,6 @@ export const MISSION_CONFIG = {
   Hard: { dTarget: 3, wTarget: 15, dReward: 100, wReward: 400 },
 };
 
-export const DIFF_VAL = { Easy: 1, Medium: 2, Hard: 3 };
-
 export const CATEGORIES = [
   "Arrays",
   "Strings",

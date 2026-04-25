@@ -1,19 +1,16 @@
 import { STATE, setSTATE, saveState, defaultState } from "./state.js";
-import { PROBLEMS } from "./data.js";
+import { PROBLEMS, lcUrl } from "./data.js";
 import { AudioSys } from "./audio.js";
 import { toast } from "./fx.js";
-import { render, populateProfileStats, applySettings, selectedRowIdx } from "./render.js";
+import { render, populateProfileStats, applySettings } from "./render.js";
 import { markDone, pickSchedule, undoProblem, commitRev, toggleStar } from "./actions.js";
-import { recalcMissions } from "./missions.js";
-import { checkTrophies } from "./trophies.js";
 import {
   showAuthModal,
   loginWithGoogle,
   signOutUser,
   submitSetup,
+  handleAuthAction,
 } from "./firebase.js";
-import { lcUrl } from "./data.js";
-import { handleAuthAction } from "./firebase.js";
 
 // ── Pattern dropdown ──────────────────────────────────────────────────────────
 function updatePatternDropdown() {
@@ -106,7 +103,7 @@ document.getElementById("btnProfile").addEventListener("click", () => {
     populateProfileStats();
     document.getElementById("profileModal").classList.add("open");
   } catch (e) {
-    window.Vanguard.alert("PROFILE ERROR", e.message);
+    Vanguard.alert("PROFILE ERROR", e.message);
   }
 });
 
@@ -137,7 +134,7 @@ document.getElementById("ddMissionDiff").addEventListener("change", (e) => {
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
-  window.Vanguard.confirm(
+  Vanguard.confirm(
     "FORMAT MEMORY",
     "This will erase ALL progress, solves, and trophies. Proceed with nuclear reset?",
     () => {
@@ -323,14 +320,8 @@ const Vanguard = {
 document.getElementById("vConfirm").addEventListener("click", () => Vanguard._onConfirm());
 document.getElementById("vCancel").addEventListener("click", () => Vanguard._onCancel());
 
-// ── Window globals (for inline HTML handlers) ─────────────────────────────────
-window.AudioSys = AudioSys;
+// ── Window globals (for inline HTML handlers and cross-module access) ─────────
 window.render = render;
-window.saveState = saveState;
-window.checkTrophies = checkTrophies;
-window.toast = toast;
-window.closeReturnModal = closeReturnModal;
-window.showReturnModal = showReturnModal;
 window.pickSchedule = pickSchedule;
 window.loginWithGoogle = loginWithGoogle;
 window.handleAuthAction = handleAuthAction;

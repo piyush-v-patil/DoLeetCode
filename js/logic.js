@@ -45,7 +45,7 @@ export function getWeeklyResetMs() {
   return nextMonday - now;
 }
 
-export function xpForLevel(lv) {
+function xpForLevel(lv) {
   return Math.floor(150 + (lv - 1) * 40);
 }
 

@@ -9,7 +9,7 @@ import { checkTrophies, DAILY_BOUNTIES } from "./trophies.js";
 import { render } from "./render.js";
 import { lcUrl } from "./data.js";
 
-export function cacheRect(el) {
+function cacheRect(el) {
   const rect = el.getBoundingClientRect();
   return { getBoundingClientRect: () => rect };
 }
