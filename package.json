@@ -1,0 +1,19 @@
+{
+  "name": "doleetcode",
+  "version": "1.0.0",
+  "description": "LeetCode grind tracker with cloud sync",
+  "type": "module",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "18.x"
+  }
+}

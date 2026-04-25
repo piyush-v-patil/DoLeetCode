@@ -1,88 +1,174 @@
-// Vercel Serverless API - Authentication
-// This handles user authentication with JWT tokens
+// Vercel Serverless API - Authentication with Upstash KV & JWT
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-const users = new Map();
+const UPSTASH_REST_API_URL = process.env.KV_REST_API_URL;
+const UPSTASH_REST_API_TOKEN = process.env.KV_REST_API_TOKEN;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Validate environment variables
+if (!UPSTASH_REST_API_URL || !UPSTASH_REST_API_TOKEN || !JWT_SECRET) {
+  throw new Error("Missing required environment variables: KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET");
+}
+
+// Upstash REST API helper
+async function kv(command, ...args) {
+  const response = await fetch(`${UPSTASH_REST_API_URL}/exec`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${UPSTASH_REST_API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify([command, ...args]),
+  });
+
+  if (!response.ok) {
+    throw new Error(`KV Error: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.error) throw new Error(result.error);
+  return result.result;
+}
+
+// Validate email format
+function validateEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+// Validate password strength (min 8 chars)
+function validatePassword(password) {
+  if (password.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+  return true;
+}
 
 export default function handler(req, res) {
   const { method } = req;
 
   switch (method) {
-    case 'POST':
+    case "POST":
       return handleAuth(req, res);
-    case 'GET':
+    case "GET":
       return getUser(req, res);
     default:
-      res.setHeader('Allow', ['POST', 'GET']);
+      res.setHeader("Allow", ["POST", "GET"]);
       return res.status(405).json({ error: `Method ${method} Not Allowed` });
   }
 }
 
-function handleAuth(req, res) {
-  const { action, email, password, name } = req.body;
-
-  if (action === 'register') {
-    if (users.has(email)) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-    const user = { id: Date.now().toString(), email, name, createdAt: new Date().toISOString() };
-    users.set(email, { ...user, password: hash(password) });
-    return res.status(201).json({ message: 'User registered', user: { email, name } });
-  }
-
-  if (action === 'login') {
-    const user = users.get(email);
-    if (!user || user.password !== hash(password)) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    const token = generateToken(user.id, email);
-    return res.status(200).json({ token, user: { id: user.id, email, name: user.name } });
-  }
-
-  return res.status(400).json({ error: 'Invalid action' });
-}
-
-function getUser(req, res) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  const token = authHeader.slice(7);
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-
-  const user = Array.from(users.values()).find(u => u.id === decoded.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  return res.status(200).json({ user: { id: user.id, email: user.email, name: user.name } });
-}
-
-// Simple hash function (use bcrypt in production)
-function hash(str) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16);
-}
-
-// Simple JWT-like token (use jsonwebtoken in production)
-function generateToken(userId, email) {
-  const payload = Buffer.from(JSON.stringify({ userId, email, exp: Date.now() + 86400000 })).toString('base64');
-  return payload;
-}
-
-function verifyToken(token) {
+async function handleAuth(req, res) {
   try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (payload.exp < Date.now()) return null;
-    return { userId: payload.userId, email: payload.email };
-  } catch {
-    return null;
+    const { action, email, password, name } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    if (action === "register") {
+      validatePassword(password);
+
+      if (!name) {
+        return res.status(400).json({ error: "Name required for registration" });
+      }
+
+      // Check if user exists
+      const existingUser = await kv("GET", `user:${email}`);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
+      const userId = Date.now().toString();
+      const user = {
+        id: userId,
+        email,
+        name,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Store user in KV (without password hash in response)
+      await kv("SET", `user:${email}`, JSON.stringify({ ...user, passwordHash }));
+
+      return res.status(201).json({
+        message: "User registered successfully",
+        user: { email, name },
+      });
+    }
+
+    if (action === "login") {
+      // Get user from KV
+      const userJson = await kv("GET", `user:${email}`);
+      if (!userJson) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const user = JSON.parse(userJson);
+      const passwordValid = await bcrypt.compare(password, user.passwordHash);
+
+      if (!passwordValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      return res.status(200).json({
+        token,
+        user: { id: user.id, email: user.email, name: user.name },
+        message: "Login successful",
+      });
+    }
+
+    return res.status(400).json({ error: "Invalid action" });
+  } catch (error) {
+    console.error("Auth Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+async function getUser(req, res) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const token = authHeader.slice(7);
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // Get user from KV using email from JWT token
+    const userJson = await kv("GET", `user:${decoded.email}`);
+
+    if (!userJson) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = JSON.parse(userJson);
+    return res.status(200).json({
+      user: { id: user.id, email: user.email, name: user.name },
+    });
+  } catch (error) {
+    console.error("Get User Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
