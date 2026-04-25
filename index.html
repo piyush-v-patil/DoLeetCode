@@ -2855,13 +2855,53 @@
         >
           All progress is device-specific unless you synchronize with your
           <span style="color: var(--text-main)">Neural Identity</span>. Connect
-          with Google to preserve your rank across the grid.
+          to preserve your rank across the grid.
         </div>
+        
+        <!-- Email/Password Login Form -->
+        <div id="authForm" style="margin-bottom: 20px; text-align: left">
+          <input
+            type="email"
+            id="authEmail"
+            placeholder="EMAIL ADDRESS..."
+            style="
+              width: 100%;
+              background: var(--bg);
+              border: 1px solid var(--border-light);
+              padding: 12px;
+              color: var(--text-main);
+              font-family: inherit;
+              font-size: 13px;
+              margin-bottom: 10px;
+            "
+          />
+          <input
+            type="password"
+            id="authPassword"
+            placeholder="PASSWORD..."
+            style="
+              width: 100%;
+              background: var(--bg);
+              border: 1px solid var(--border-light);
+              padding: 12px;
+              color: var(--text-main);
+              font-family: inherit;
+              font-size: 13px;
+              margin-bottom: 15px;
+            "
+          />
+        </div>
+        
         <button
           class="btn"
           onclick="
-            loginWithGoogle();
-            document.getElementById('welcomeModal').classList.remove('open');
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            if (email && password) {
+              handleAuthAction('login', email, password);
+            } else {
+              alert('Please enter email and password');
+            }
           "
           style="
             width: 100%;
@@ -2874,7 +2914,32 @@
             letter-spacing: 2px;
           "
         >
-          [ SECURE SYNC WITH GOOGLE ]
+          [ LOGIN ]
+        </button>
+        <button
+          class="btn"
+          onclick="
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            if (email && password) {
+              handleAuthAction('register', email, password);
+            } else {
+              alert('Please enter email and password');
+            }
+          "
+          style="
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+            font-weight: 700;
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 229, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+          "
+        >
+          [ CREATE ACCOUNT ]
         </button>
         <button
           class="btn"
@@ -3138,6 +3203,7 @@
       }
 
       window.loginWithGoogle = loginWithGoogle;
+      window.handleAuthAction = handleAuthAction;
       window.signOutUser = signOutUser;
       window.submitSetup = submitSetup;
 

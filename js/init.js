@@ -13,6 +13,7 @@ import {
   submitSetup,
 } from "./firebase.js";
 import { lcUrl } from "./data.js";
+import { handleAuthAction } from "./firebase.js";
 
 // ── Pattern dropdown ──────────────────────────────────────────────────────────
 function updatePatternDropdown() {
@@ -332,6 +333,7 @@ window.closeReturnModal = closeReturnModal;
 window.showReturnModal = showReturnModal;
 window.pickSchedule = pickSchedule;
 window.loginWithGoogle = loginWithGoogle;
+window.handleAuthAction = handleAuthAction;
 window.signOutUser = signOutUser;
 window.submitSetup = submitSetup;
 window.Vanguard = Vanguard;

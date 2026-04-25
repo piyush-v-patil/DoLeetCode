@@ -1,43 +1,66 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// API-based Authentication (Vercel Backend)
+// Uses the /api/auth and /api/state endpoints
 
 import { STATE, setSTATE, saveState, defaultState, registerSyncCallback } from "./state.js";
 import { toast } from "./fx.js";
 import { render } from "./render.js";
 
-// REPLACE WITH YOUR FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "API_KEY_HERE",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const API_BASE = "/api";
 
 let currentUser = null;
+let authToken = null;
 
+// Save token to localStorage
+function saveToken(token) {
+  localStorage.setItem("auth_token", token);
+  authToken = token;
+}
+
+// Get token from localStorage
+function getToken() {
+  if (!authToken) {
+    authToken = localStorage.getItem("auth_token");
+  }
+  return authToken;
+}
+
+// Clear auth data
+function clearAuth() {
+  localStorage.removeItem("auth_token");
+  authToken = null;
+  currentUser = null;
+}
+
+// API helper
+async function apiCall(endpoint, options = {}) {
+  const token = getToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token && { "Authorization": `Bearer ${token}` }),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(error.error || "API Error");
+  }
+
+  return response.json();
+}
+
+// Cloud sync functions
 async function syncToCloud() {
   if (!currentUser) return;
   try {
-    await setDoc(doc(db, "users", currentUser.uid), { state: STATE }, { merge: true });
+    await apiCall("/state", {
+      method: "POST",
+      body: JSON.stringify({ state: STATE }),
+    });
     document.getElementById("syncIndicator")?.classList.add("synced");
   } catch (e) {
     console.error("Cloud Sync Error:", e);
@@ -47,9 +70,8 @@ async function syncToCloud() {
 async function syncFromCloud() {
   if (!currentUser) return;
   try {
-    const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (snap.exists()) {
-      const cloudState = snap.data().state;
+    const { state: cloudState } = await apiCall("/state");
+    if (cloudState && Object.keys(cloudState).length > 0) {
       setSTATE({ ...STATE, ...cloudState });
       if (!STATE.achievements) STATE.achievements = {};
       if (!STATE.starredProblems) STATE.starredProblems = {};
@@ -68,40 +90,40 @@ async function syncFromCloud() {
 // Register the sync callback so saveState() triggers cloud sync when logged in
 registerSyncCallback(() => { if (currentUser) syncToCloud(); });
 
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
+// Check for existing session on load
+async function checkSession() {
+  const token = getToken();
+  if (!token) return;
+
+  try {
+    const { user } = await apiCall("/auth");
+    currentUser = user;
+    updateUI(true);
+    syncFromCloud();
+  } catch (e) {
+    clearAuth();
+  }
+}
+
+// Update UI based on auth state
+function updateUI(isLoggedIn) {
   const loginBtn = document.getElementById("btnGoogleLogin");
   const profileName = document.getElementById("profileUsername");
   const signOutBtn = document.getElementById("btnSignOut");
   const hudProfileBtn = document.getElementById("btnProfile");
 
-  if (user) {
+  if (isLoggedIn && currentUser) {
     if (loginBtn) {
-      loginBtn.textContent = "SYNCED: " + (STATE.profileName || user.displayName).toUpperCase();
+      loginBtn.textContent = "SYNCED: " + (STATE.profileName || currentUser.name || "USER").toUpperCase();
       loginBtn.style.color = "var(--success)";
       loginBtn.disabled = true;
     }
     if (signOutBtn) signOutBtn.style.display = "block";
-    if (profileName) profileName.textContent = (STATE.profileName || user.displayName).toUpperCase();
+    if (profileName) profileName.textContent = (STATE.profileName || currentUser.name || "USER").toUpperCase();
     if (hudProfileBtn) hudProfileBtn.innerHTML = "👤 PROFILE";
-
-    if (!STATE.profileName) {
-      document.getElementById("setupModal").classList.add("open");
-      const input = document.getElementById("setupNameInput");
-      if (input) input.value = user.displayName || "";
-    }
-
-    const lastToast = localStorage.getItem("last_welcome_toast") || 0;
-    const now = Date.now();
-    if (now - lastToast > 3 * 60 * 60 * 1000) {
-      toast(`WELCOME BACK, OPERATOR ${(STATE.profileName || user.displayName).toUpperCase()}!`);
-      localStorage.setItem("last_welcome_toast", now);
-    }
-
-    syncFromCloud();
   } else {
     if (loginBtn) {
-      loginBtn.textContent = "LOGIN VIA GOOGLE";
+      loginBtn.textContent = "LOGIN / REGISTER";
       loginBtn.style.color = "var(--success)";
       loginBtn.disabled = false;
     }
@@ -109,29 +131,26 @@ onAuthStateChanged(auth, (user) => {
     if (profileName) profileName.textContent = "GUEST USER";
     if (hudProfileBtn) hudProfileBtn.innerHTML = "🔑 LOGIN";
   }
-});
+}
+
+// Initialize session check
+checkSession();
 
 export function showAuthModal() {
   document.getElementById("welcomeModal").classList.add("open");
 }
 
 export async function loginWithGoogle() {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (e) {
-    toast("Login Failed", true);
-  }
+  // Show the auth modal for email/password login
+  showAuthModal();
 }
 
 export async function signOutUser() {
-  try {
-    await signOut(auth);
-    toast("Logged Out");
-    setSTATE(defaultState());
-    render();
-  } catch (e) {
-    toast("Logout Failed", true);
-  }
+  clearAuth();
+  toast("Logged Out");
+  setSTATE(defaultState());
+  updateUI(false);
+  render();
 }
 
 export async function submitSetup() {
@@ -143,4 +162,32 @@ export async function submitSetup() {
   document.getElementById("setupModal").classList.remove("open");
   render();
   toast("IDENTITY ESTABLISHED");
+}
+
+// Export for modal forms
+export async function handleAuthAction(action, email, password, name) {
+  try {
+    const { token, user, message } = await apiCall("/auth", {
+      method: "POST",
+      body: JSON.stringify({ action, email, password, name }),
+    });
+
+    if (token) {
+      saveToken(token);
+      currentUser = user;
+      updateUI(true);
+      document.getElementById("welcomeModal")?.classList.remove("open");
+      toast(message || "Welcome!");
+
+      if (!STATE.profileName) {
+        document.getElementById("setupModal").classList.add("open");
+      } else {
+        syncFromCloud();
+      }
+    } else {
+      toast(message || message);
+    }
+  } catch (e) {
+    toast(e.message, true);
+  }
 }
