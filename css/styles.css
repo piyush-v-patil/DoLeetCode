@@ -2224,3 +2224,164 @@ body::after {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 600px) {
+  /* Hide keyboard hints on mobile */
+  .kb-hint {
+    display: none;
+  }
+
+  /* Responsive HUD header */
+  header.hud {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand-area {
+    width: 100%;
+  }
+
+  .brand h1 {
+    font-size: 16px;
+  }
+
+  .xp-block {
+    width: 100%;
+  }
+
+  .hud-controls {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Modal sizes for mobile */
+  .modal-inner {
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  .ob-hud-frame {
+    max-width: calc(100vw - 20px) !important;
+    padding: 20px !important;
+  }
+
+  /* Auth modal responsive */
+  #welcomeModal .ob-hud-frame {
+    margin: auto;
+    width: 100%;
+  }
+
+  #setupModal .ob-hud-frame {
+    margin: auto;
+    width: 100%;
+  }
+
+  /* Input fields responsive */
+  input[type="email"],
+  input[type="password"],
+  input[type="text"],
+  select {
+    font-size: 16px !important;
+    padding: 14px !important;
+  }
+
+  /* Buttons responsive */
+  .btn {
+    font-size: 12px !important;
+    padding: 12px 10px !important;
+    margin-top: 8px !important;
+  }
+
+  /* Panel title font size */
+  .panel-title {
+    font-size: 11px;
+  }
+
+  /* Tree view responsive */
+  .tree-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tree-node {
+    flex: 0 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+  }
+
+  /* Codex controls responsive */
+  .codex-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dropdown,
+  .search-box {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  /* Profile modal responsive */
+  #profileModal .modal-inner {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  .stat-card {
+    font-size: 12px;
+  }
+
+  .stat-card .val {
+    font-size: 18px !important;
+  }
+
+  /* Settings modal responsive */
+  #settingsModal .modal-inner {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  .settings-row {
+    flex-wrap: wrap;
+  }
+
+  .settings-select {
+    font-size: 12px;
+  }
+
+  /* Trophy modal responsive */
+  #trophyModal .modal-inner {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  /* Mission panel responsive */
+  .missions {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand h1 {
+    font-size: 14px;
+  }
+
+  .ob-hud-title {
+    font-size: 16px !important;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    font-size: 14px !important;
+  }
+
+  .btn {
+    font-size: 11px !important;
+    padding: 10px 8px !important;
+  }
+
+  .tree-node {
+    flex: 0 1 100%;
+    max-width: 100%;
+  }
+}

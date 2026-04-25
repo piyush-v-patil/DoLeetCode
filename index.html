@@ -660,60 +660,122 @@
               color: var(--text-main);
               font-family: inherit;
               font-size: 13px;
+              margin-bottom: 10px;
+            "
+          />
+          <input
+            type="text"
+            id="authName"
+            placeholder="DISPLAY NAME... (Register only)"
+            style="
+              width: 100%;
+              background: var(--bg);
+              border: 1px solid var(--border-light);
+              padding: 12px;
+              color: var(--text-main);
+              font-family: inherit;
+              font-size: 13px;
               margin-bottom: 15px;
+              display: none;
             "
           />
         </div>
-        
-        <button
-          class="btn"
-          onclick="
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            if (email && password) {
-              handleAuthAction('login', email, password);
-            } else {
-              alert('Please enter email and password');
-            }
-          "
-          style="
-            width: 100%;
-            padding: 16px;
-            font-weight: 800;
-            border-color: var(--success);
-            color: var(--success);
-            background: rgba(0, 255, 102, 0.1);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-          "
-        >
-          [ LOGIN ]
-        </button>
-        <button
-          class="btn"
-          onclick="
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            if (email && password) {
-              handleAuthAction('register', email, password);
-            } else {
-              alert('Please enter email and password');
-            }
-          "
-          style="
-            width: 100%;
-            margin-top: 10px;
-            padding: 14px;
-            font-weight: 700;
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            background: rgba(0, 229, 255, 0.1);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-          "
-        >
-          [ CREATE ACCOUNT ]
-        </button>
+
+        <div id="loginMode">
+          <button
+            class="btn"
+            onclick="
+              const email = document.getElementById('authEmail').value;
+              const password = document.getElementById('authPassword').value;
+              if (email && password) {
+                handleAuthAction('login', email, password);
+              } else {
+                alert('Please enter email and password');
+              }
+            "
+            style="
+              width: 100%;
+              padding: 16px;
+              font-weight: 800;
+              border-color: var(--success);
+              color: var(--success);
+              background: rgba(0, 255, 102, 0.1);
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            "
+          >
+            [ LOGIN ]
+          </button>
+          <button
+            class="btn"
+            onclick="
+              document.getElementById('loginMode').style.display = 'none';
+              document.getElementById('registerMode').style.display = 'block';
+              document.getElementById('authName').style.display = 'block';
+            "
+            style="
+              width: 100%;
+              margin-top: 10px;
+              padding: 14px;
+              font-weight: 700;
+              border-color: var(--neon-cyan);
+              color: var(--neon-cyan);
+              background: rgba(0, 229, 255, 0.1);
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            "
+          >
+            [ NEW ACCOUNT ]
+          </button>
+        </div>
+
+        <div id="registerMode" style="display: none">
+          <button
+            class="btn"
+            onclick="
+              const email = document.getElementById('authEmail').value;
+              const password = document.getElementById('authPassword').value;
+              const name = document.getElementById('authName').value;
+              if (email && password && name) {
+                handleAuthAction('register', email, password, name);
+              } else {
+                alert('Please fill all fields');
+              }
+            "
+            style="
+              width: 100%;
+              padding: 16px;
+              font-weight: 800;
+              border-color: var(--neon-cyan);
+              color: var(--neon-cyan);
+              background: rgba(0, 229, 255, 0.1);
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            "
+          >
+            [ CREATE ACCOUNT ]
+          </button>
+          <button
+            class="btn"
+            onclick="
+              document.getElementById('loginMode').style.display = 'block';
+              document.getElementById('registerMode').style.display = 'none';
+              document.getElementById('authName').style.display = 'none';
+            "
+            style="
+              width: 100%;
+              margin-top: 10px;
+              padding: 14px;
+              font-weight: 700;
+              border-color: var(--text-muted);
+              color: var(--text-muted);
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            "
+          >
+            [ BACK TO LOGIN ]
+          </button>
+        </div>
         <button
           class="btn"
           id="btnSkipAuth"

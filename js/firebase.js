@@ -98,6 +98,10 @@ async function checkSession() {
   try {
     const { user } = await apiCall("/auth");
     currentUser = user;
+    // Set profileName from server data on first load
+    if (!STATE.profileName && currentUser?.name) {
+      STATE.profileName = currentUser.name;
+    }
     updateUI(true);
     syncFromCloud();
   } catch (e) {
@@ -179,9 +183,11 @@ export async function handleAuthAction(action, email, password, name) {
       document.getElementById("welcomeModal")?.classList.remove("open");
       toast(message || "Welcome!");
 
-      if (!STATE.profileName) {
+      // Use server name if available, only show setup if name is missing
+      if (!currentUser?.name) {
         document.getElementById("setupModal").classList.add("open");
       } else {
+        STATE.profileName = currentUser.name;
         syncFromCloud();
       }
     } else {
