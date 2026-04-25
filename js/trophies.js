@@ -160,7 +160,7 @@ export const DAILY_BOUNTIES = [
   },
 ];
 
-export function showAchievement(t, bounty = false) {
+function showAchievement(t, bounty = false) {
   setTimeout(() => AudioSys.success(), 100);
   let container = document.getElementById("achieveContainer");
   if (!container) {

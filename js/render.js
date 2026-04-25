@@ -14,8 +14,7 @@ import {
 } from "./logic.js";
 import { getMissionData } from "./missions.js";
 import { DAILY_BOUNTIES, LIFETIME_TROPHIES, checkTrophies } from "./trophies.js";
-
-export let selectedRowIdx = -1;
+import { toast } from "./fx.js";
 
 export function populateProfileStats() {
   const lv = computeLevel(STATE.xp);
@@ -48,7 +47,7 @@ export function applySettings() {
   document.getElementById("ddMissionDiff").value = STATE.settings.missionDiff || "Medium";
 }
 
-export function updateSkillTree() {
+function updateSkillTree() {
   const catMap = {
     Arrays: "arr", "Linked List": "ll", Strings: "str", Heap: "heap",
     Math: "math", Trees: "tree", Graphs: "graph", Greedy: "greedy", Design: "design", DP: "dp",
@@ -76,7 +75,7 @@ export function updateSkillTree() {
   });
 }
 
-export function renderGrid() {
+function renderGrid() {
   const f = STATE.filters;
   const STATUS_MAP = { active: "todo", done: "done", revise: "revise", mastered: "mastered" };
   let filtered = PROBLEMS.filter((p) => {
@@ -99,8 +98,6 @@ export function renderGrid() {
     if (f.sort === "num") return a.n - b.n;
     return a.c.localeCompare(b.c) || a.n - b.n;
   });
-
-  selectedRowIdx = -1;
 
   document.getElementById("grimoire").innerHTML = filtered
     .map((p, i) => {
@@ -351,6 +348,6 @@ ${countDue() > 0 ? `<div class="due-footer">[ ${countDue()} REVIEWS PENDING ]</d
 </div>`;
   } catch (error) {
     console.error("FATAL RENDER ERROR:", error);
-    window.toast?.("A render error occurred. Please check console.", true);
+    toast("A render error occurred. Please check console.", true);
   }
 }
