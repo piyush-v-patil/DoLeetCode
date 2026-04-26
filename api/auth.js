@@ -26,7 +26,8 @@ function handleAuth(req, res) {
     }
     const user = { id: Date.now().toString(), email, name, createdAt: new Date().toISOString() };
     users.set(email, { ...user, password: hash(password) });
-    return res.status(201).json({ message: 'User registered', user: { email, name } });
+    const token = generateToken(user.id, email);
+    return res.status(201).json({ token, message: 'Account created', user: { id: user.id, email, name } });
   }
 
   if (action === 'login') {

@@ -185,7 +185,7 @@ export async function handleAuthAction(action, email, password, name) {
         syncFromCloud();
       }
     } else {
-      toast(message || message);
+      toast(message || "Done");
     }
   } catch (e) {
     toast(e.message, true);
